@@ -1,146 +1,227 @@
 # OpenVPN Access Manager
 
-## Descripcion
+Control de acceso basado en grupos para OpenVPN utilizando **learn-address** e **iptables**.
 
-Sistema de control de acceso basado en roles (RBAC) para OpenVPN. Permite gestionar permisos de red mediante un archivo de configuracion centralizado, sin necesidad de modificar scripts.
+OpenVPN Access Manager permite controlar el acceso a redes y servicios internos sin modificar la configuración de OpenVPN ni mantener reglas de firewall por usuario.
 
-## Caracteristicas
+Cada cliente VPN obtiene sus permisos desde su archivo **CCD**, mientras que los grupos y recursos disponibles se administran desde un único archivo de configuración (`access.conf`).
 
-- Control de acceso basado en roles (RBAC)
-- Configuracion centralizada en access.conf
-- Gestion simple de usuarios mediante archivos CCD
-- Soporte para multiples servicios (DNS, WEB, FILESERVER, etc.)
-- Permisos granulares por red o direccion IP
-- Escalable - agregar nuevos servicios solo requiere una linea
-- Totalmente transparente para OpenVPN
+El objetivo es separar claramente la autenticación de la autorización:
 
-## Arquitectura
+- **OpenVPN** autentica al cliente.
+- **OpenVPN Access Manager** determina a qué recursos puede acceder.
+- **iptables** aplica las políticas de acceso.
 
-OpenVPN (autenticacion + asignacion IP)
-   ↓
-CCD (define IP fija + roles)
-   ↓
-learn-address.sh (lee CCD + aplica reglas)
-   ↓
-access.conf (define servicios y redes)
-   ↓
-iptables (control de acceso)
+---
 
-## Estructura de Archivos
+# Características
 
+- Administración de permisos basada en grupos.
+- Integración con `learn-address`.
+- Compatible con OpenVPN Road Warrior y Site-to-Site.
+- Configuración centralizada mediante `access.conf`.
+- Gestión de usuarios mediante archivos CCD.
+- Permisos por dirección IP o redes completas (CIDR).
+- Política **DROP** por defecto.
+- Compatible con Red Hat Enterprise Linux, AlmaLinux y Rocky Linux.
+- Fácil de extender agregando nuevos grupos de acceso.
+- Sin modificaciones al código al incorporar nuevos usuarios.
+
+---
+
+# Arquitectura
+
+```
+               OpenVPN
+                   │
+                   ▼
+          Autenticación
+                   │
+                   ▼
+              Archivo CCD
+          (# ACCESS=...)
+                   │
+                   ▼
+          learn-address.sh
+                   │
+                   ▼
+             access.conf
+                   │
+                   ▼
+              iptables
+                   │
+                   ▼
+      Recursos permitidos
+```
+
+---
+
+# Estructura
+
+```
 /etc/openvpn/server/
+
 ├── server.conf
 ├── ccd/
 │   ├── cliente1
 │   ├── cliente2
 │   └── ...
+│
 └── access-manager/
-    ├── learn-address.sh
     ├── access.conf
+    ├── learn-address.sh
     ├── install.sh
     └── uninstall.sh
+```
 
-## Instalacion Rapida
+---
 
-# Clonar el repositorio
-git clone https://github.com/orangebox/openvpn-access-manager.git
+# Instalación
 
-# Ir al directorio
+```bash
+git clone https://github.com/OrangeBox-Labs/openvpn-access-manager.git
+
 cd openvpn-access-manager
 
-# Ejecutar instalacion
-sudo ./install.sh
+./install.sh
+```
 
-## Configuracion
+---
 
-### 1. Definir Servicios en access.conf
+# Configuración
 
-# Servicios de red
+Toda la configuración se realiza desde `access.conf`.
+
+Ejemplo:
+
+```bash
 GROUP_DNS="192.168.10.2"
+
 GROUP_WEB="192.168.10.20,192.168.10.21"
+
 GROUP_FILESERVER="192.168.10.30"
-GROUP_MONITOREO="192.168.200.240"
+
 GROUP_AD="192.168.10.10,192.168.10.11"
 
-# Redes
+GROUP_MONITOREO="192.168.200.240"
+
+GROUP_BACKUP="192.168.50.20"
+
+GROUP_VCENTER="192.168.100.50"
+
 GROUP_DMZ="172.16.0.0/24"
+
 GROUP_LAN="192.168.0.0/16"
 
-# Acceso total
-GROUP_VIP="ALL"
-
-# Internet (requiere NAT)
 GROUP_INTERNET="0.0.0.0/0"
 
-### 2. Asignar Roles en CCD
+GROUP_VIP="ALL"
+```
 
-# /etc/openvpn/server/ccd/felipe
+Agregar un nuevo grupo sólo requiere definir una nueva variable.
+
+---
+
+# Asignar permisos
+
+Cada cliente obtiene sus permisos desde su archivo CCD.
+
+Ejemplo:
+
+```conf
 ifconfig-push 10.100.0.10 255.255.255.0
+
 # ACCESS=DNS,WEB,FILESERVER
+```
 
-# /etc/openvpn/server/ccd/administrador
-ifconfig-push 10.100.0.30 255.255.255.0
+Administrador:
+
+```conf
+ifconfig-push 10.100.0.20 255.255.255.0
+
 # ACCESS=VIP
+```
 
-# /etc/openvpn/server/ccd/proveedor
-ifconfig-push 10.100.0.40 255.255.255.0
-# ACCESS=WEB
+Proveedor:
 
-## Comandos Utiles
-
-# Ver reglas actuales
-sudo iptables -L OPENVPN -v -n
-
-# Ver conexiones activas
-sudo iptables -L OPENVPN -v -n | grep 10.100
-
-# Limpiar todas las reglas
-sudo iptables -F OPENVPN
-
-# Reiniciar el servicio
-sudo systemctl restart openvpn-server@server
-
-## Ejemplos de Casos de Uso
-
-### Administrador de Sistemas
-
-# ACCESS=DNS,WEB,FILESERVER,AD,VCENTER,BACKUP
-
-Acceso a todos los servicios de infraestructura.
-
-### Desarrollador Web
-
-# ACCESS=WEB,DMZ
-
-Acceso a servidores web y zona DMZ.
-
-### Auditor de Seguridad
-
-# ACCESS=MONITOREO,BACKUP,AD
-
-Acceso a sistemas de monitoreo, backups y Active Directory.
-
-### Proveedor Externo
+```conf
+ifconfig-push 10.100.0.30 255.255.255.0
 
 # ACCESS=WEB
+```
 
-Acceso limitado solo a servidores web.
+---
 
-## Seguridad
+# Casos de uso
 
-- Politica DROP por defecto
-- Acceso granular por IP/red
-- Separacion de responsabilidades
-- Logs detallados de conexiones
+| Perfil | Permisos |
+|---------|----------|
+| Administrador | `VIP` |
+| Operador NOC | `DNS,MONITOREO` |
+| Equipo Web | `WEB,DMZ` |
+| VMware | `VCENTER` |
+| Backups | `BACKUP` |
+| Proveedor | `WEB` |
 
-## Contribuciones
+---
 
-Las contribuciones son bienvenidas. Por favor, lee nuestras guias de contribucion antes de enviar un PR.
+# Comandos útiles
 
-## Licencia
+Mostrar reglas activas.
 
-MIT License - Copyright (c) 2024 OrangeBox Latam
+```bash
+iptables -L OPENVPN -v -n
+```
 
-## Equipo
+Vaciar reglas.
 
-Desarrollado y mantenido por el equipo de OrangeBox Chile
+```bash
+iptables -F OPENVPN
+```
+
+Reiniciar OpenVPN.
+
+```bash
+systemctl restart openvpn-server@server
+```
+
+---
+
+# Compatibilidad
+
+- OpenVPN 2.6 o superior
+- Red Hat Enterprise Linux 10
+- AlmaLinux 10
+- Rocky Linux 10
+- iptables
+
+---
+
+# Roadmap
+
+- [ ] Compatibilidad con nftables.
+- [ ] Soporte para IPv6.
+- [ ] Sistema de logging configurable.
+- [ ] Validación automática de la configuración.
+- [ ] Pruebas automatizadas.
+- [ ] Paquetes RPM.
+
+---
+
+# Autor
+
+**OrangeBox Latam**
+
+🌐 https://www.orangebox.cl
+
+📧 info@orangebox.cl
+
+Documentación técnica y artículos relacionados:
+
+https://www.orangebox.cl/blog/
+
+---
+
+# Licencia
+
+MIT License.
