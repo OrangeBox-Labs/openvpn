@@ -7,6 +7,22 @@ Este repositorio reúne proyectos independientes desarrollados para resolver nec
 Todos los proyectos están pensados para distribuciones **Red Hat Enterprise Linux**, **AlmaLinux** y **Rocky Linux**, priorizando soluciones simples, fáciles de mantener y orientadas a producción.
 
 ---
+# Guías para implementar OpenVPN
+
+Para una implementacion completa y segura de OpenVPN, te recomiendo seguir estas dos guias practicas:
+
+1. [Como implementar una VPN Linux para empresas con OpenVPN](https://www.orangebox.cl/blog/seguridad/vpn-linux-empresas-openvpn/)
+   Esta guia te llevara paso a paso desde la instalacion del servidor en RHEL, AlmaLinux o Rocky Linux,
+   pasando por la creacion de una PKI con Easy-RSA, la configuracion de túneles road warrior y site-to-site.
+
+2. [OpenVPN en Linux: como controlar el acceso de cada usuario a tu red interna](https://www.orangebox.cl/blog/seguridad/control-acceso-openvpn-linux-iptables/)
+   Esta guia complementa la anterior y resuelve un problema crucial: como aplicar el principio de minimo
+   privilegio a tus usuarios VPN. Aprenderas a implementar un control de acceso basado en roles (RBAC)
+   utilizando iptables y los archivos CCD de OpenVPN, separando claramente la autenticacion (OpenVPN)
+   de la autorizacion (el firewall).
+
+Ambas guias estan diseñadas para entornos empresariales y te proporcionaran una base solida para
+administrar tu infraestructura VPN de manera segura y escalable.
 
 # Proyectos
 
