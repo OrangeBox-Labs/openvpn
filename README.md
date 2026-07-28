@@ -34,9 +34,9 @@ Permite definir permisos de acceso mediante archivos CCD y un archivo de configu
 
 **Repositorio**
 
-```
-openvpn-access-manager/
-```
+| Proyecto | Descripción | Enlace |
+|----------|-------------|--------|
+| **openvpn-access-manager** | Control de acceso basado en grupos para OpenVPN utilizando learn-address e iptables. | [Ver repositorio →](https://github.com/OrangeBox-Labs/openvpn/tree/main/openvpn-access-manager) |
 
 Características principales:
 
