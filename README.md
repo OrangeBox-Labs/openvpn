@@ -26,15 +26,13 @@ administrar tu infraestructura VPN de manera segura y escalable.
 
 # Proyectos
 
-## OpenVPN Access Manager
+## [OpenVPN Access Manager →](https://github.com/OrangeBox-Labs/openvpn/tree/main/openvpn-access-manager) 
 
 Control de acceso basado en grupos utilizando **learn-address** e **iptables**.
 
 Permite definir permisos de acceso mediante archivos CCD y un archivo de configuración centralizado, sin necesidad de mantener reglas de firewall por usuario.
 
 **Repositorio**
-
-[Ver repositorio →](https://github.com/OrangeBox-Labs/openvpn/tree/main/openvpn-access-manager) 
 
 Características principales:
 
